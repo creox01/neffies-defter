@@ -48,9 +48,12 @@ def draft(item):
         f"Kaynak yayin: {item['source']}\nKaynak baglanti: {item['link']}\n"
         f"Haber basligi: {item['title']}\nHaber ozeti: {item['summary']}\n\n"
         "Bu gelismeyi ses spesifikasyonuna gore tam yaziya cevir. "
+        "image_query kurali: Unsplash stok aramasi icin EN FAZLA 2 genel ingilizce kelime. "
+        "Ozel isim, yer adi, bolge adi, uzum ya da sarap adi YASAK. Sadece genel atmosfer terimi. "
+        "Ornekler: open fire, wine cellar, stone courtyard, fresh bread, cozy room. "
         "SADECE JSON don, baska metin yok: "
         '{"baslik": "...", "govde": "paragraflar, bos satirla ayrilmis", '
-        '"image_query": "kisa ingilizce atmosfer sorgusu"}'
+        '"image_query": "iki kelimelik genel atmosfer"}'
     )
     msg = _client.messages.create(
         model=DRAFT_MODEL, max_tokens=1500,
