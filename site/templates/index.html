@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neffies Defter</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="mast">
+  <img class="logo" alt="Neffiès" src="assets/logo.png">
+  <p class="mast-sub">Defter</p>
+  <p class="mast-tag">İki kıyı, tek hafıza. Sektörün kayıt defteri.</p>
+  <p class="mast-note">İç kullanım · Yatırımcı ve danışman ekip</p>
+</header>
+<nav class="cats" aria-label="Kategoriler">
+  <div class="cats-scroll">
+    <button class="chip" data-cat="all" aria-pressed="true">Tümü</button>
+    <button class="chip" data-cat="Sofra ve Ateş" aria-pressed="false">Sofra ve Ateş</button>
+    <button class="chip" data-cat="Mahzen ve Şarap" aria-pressed="false">Mahzen ve Şarap</button>
+    <button class="chip" data-cat="Fırın ve Ekmek" aria-pressed="false">Fırın ve Ekmek</button>
+    <button class="chip" data-cat="Konaklama" aria-pressed="false">Konaklama</button>
+    <button class="chip" data-cat="Tasarım ve Mekan" aria-pressed="false">Tasarım ve Mekan</button>
+    <button class="chip" data-cat="Urla ve Ege" aria-pressed="false">Urla ve Ege</button>
+  </div>
+</nav>
+<main class="wrap">
+{{CARDS}}
+</main>
+<footer>
+  <div class="fc">NEFFIÈS</div>
+  Urla · Est. 2025 · Defter, sektörel kayıt için iç kullanım belgesidir.
+</footer>
+<script>
+  const chips=document.querySelectorAll('.chip');
+  const cards=document.querySelectorAll('.card');
+  chips.forEach(c=>c.addEventListener('click',()=>{
+    chips.forEach(x=>x.setAttribute('aria-pressed','false'));
+    c.setAttribute('aria-pressed','true');
+    const cat=c.dataset.cat;
+    cards.forEach(card=>{card.style.display=(cat==='all'||card.dataset.cat===cat)?'block':'none';});
+  }));
+</script>
+</body>
+</html>
