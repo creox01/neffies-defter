@@ -1,7 +1,8 @@
 name: toplama
 on:
   schedule:
-    - cron: "0 7 * * 1,3,5"   # Pazartesi, Carsamba, Cuma 07:00 UTC
+    - cron: "17 4 * * *"    # her gun 04:17 UTC = 07:17 TRT (sabah)
+    - cron: "47 16 * * *"   # her gun 16:47 UTC = 19:47 TRT (aksam)
   workflow_dispatch: {}        # elle test icin
 jobs:
   ingest:
