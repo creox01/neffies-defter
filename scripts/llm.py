@@ -1,6 +1,4 @@
 """Secim ve yazim. Ses spesifikasyonu sistem talimati olarak kullanilir."""
-import json
-import os
 import pathlib
 import anthropic
 
@@ -10,14 +8,52 @@ DRAFT_MODEL = "claude-sonnet-4-6"
 _SPEC = pathlib.Path(__file__).with_name("voice_spec.md").read_text(encoding="utf-8")
 _client = anthropic.Anthropic()  # ANTHROPIC_API_KEY env'den, yoksa fail fast
 
+_SELECT_TOOL = {
+    "name": "secimleri_bildir",
+    "description": "Secilen adaylari yapilandirilmis olarak dondur.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "secimler": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "index": {"type": "integer"},
+                        "kategori": {"type": "string"},
+                        "kiyi": {
+                            "type": "string",
+                            "enum": ["Fransa kıyısı", "Ege kıyısı", "İki kıyı"],
+                        },
+                    },
+                    "required": ["index", "kategori", "kiyi"],
+                },
+            }
+        },
+        "required": ["secimler"],
+    },
+}
 
-def _parse_json(text):
-    text = text.strip()
-    if text.startswith("```"):
-        text = text.split("```")[1]
-        if text.startswith("json"):
-            text = text[4:]
-    return json.loads(text.strip())
+_DRAFT_TOOL = {
+    "name": "yaziyi_bildir",
+    "description": "Tamamlanan yaziyi yapilandirilmis olarak dondur.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "baslik": {"type": "string"},
+            "govde": {"type": "string"},
+            "image_query": {"type": "string"},
+        },
+        "required": ["baslik", "govde", "image_query"],
+    },
+}
+
+
+def _tool_input(msg, tool_name):
+    for block in msg.content:
+        if block.type == "tool_use" and block.name == tool_name:
+            return block.input
+    raise RuntimeError(f"{tool_name} araci cagrilmadi")
 
 
 def select(candidates):
@@ -29,16 +65,16 @@ def select(candidates):
     system = (
         _SPEC + "\n\nGOREV: Asagidaki adaylardan en fazla 2 tanesini sec. "
         "Bir aday ancak bir kategoriye net oturuyorsa, somut bir Neffies cikarimi varsa "
-        "ve genel gecer trend tekrari degilse secilir. Hicbiri uygun degilse bos liste don. "
-        "SADECE JSON don, baska metin yok: "
-        '[{"index": 0, "kategori": "...", "kiyi": "Fransa kıyısı|Ege kıyısı|İki kıyı"}]'
+        "ve genel gecer trend tekrari degilse secilir. Hicbiri uygun degilse bos liste don."
     )
     msg = _client.messages.create(
         model=SELECT_MODEL, max_tokens=600,
         system=system,
+        tools=[_SELECT_TOOL],
+        tool_choice={"type": "tool", "name": "secimleri_bildir"},
         messages=[{"role": "user", "content": listing}],
     )
-    return _parse_json(msg.content[0].text)
+    return _tool_input(msg, "secimleri_bildir")["secimler"]
 
 
 def draft(item):
@@ -50,14 +86,13 @@ def draft(item):
         "Bu gelismeyi ses spesifikasyonuna gore tam yaziya cevir. "
         "image_query kurali: Unsplash stok aramasi icin EN FAZLA 2 genel ingilizce kelime. "
         "Ozel isim, yer adi, bolge adi, uzum ya da sarap adi YASAK. Sadece genel atmosfer terimi. "
-        "Ornekler: open fire, wine cellar, stone courtyard, fresh bread, cozy room. "
-        "SADECE JSON don, baska metin yok: "
-        '{"baslik": "...", "govde": "paragraflar, bos satirla ayrilmis", '
-        '"image_query": "iki kelimelik genel atmosfer"}'
+        "Ornekler: open fire, wine cellar, stone courtyard, fresh bread, cozy room."
     )
     msg = _client.messages.create(
         model=DRAFT_MODEL, max_tokens=1500,
         system=_SPEC,
+        tools=[_DRAFT_TOOL],
+        tool_choice={"type": "tool", "name": "yaziyi_bildir"},
         messages=[{"role": "user", "content": user}],
     )
-    return _parse_json(msg.content[0].text)
+    return _tool_input(msg, "yaziyi_bildir")
